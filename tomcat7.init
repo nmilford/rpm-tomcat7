@@ -10,7 +10,7 @@
 [ -f /etc/sysconfig/network ] && . /etc/sysconfig/network
 [ "${NETWORKING}" = "no" ] && exit 0
 
-prog="tomcat6"
+prog="tomcat7"
 [ -f /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
 TOMCATDEBUG=
