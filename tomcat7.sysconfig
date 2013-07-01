@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Tomcat7 Configuration file
+
+# JAVA_HOME
+#
+# This is the $JAVA_HOME of JDK, not JRE. not needed if you've setup
+# the file "/etc/profile.d/java.sh" with this variable.
+#export JAVA_HOME="/usr/java"
+
+# CATALINA_HOME
+#
+# This is the installation directory of tomcat 5.
+# Default is /opt/tomcat6.
+#CATALINA_HOME="/opt/tomcat6"
+
+# RUNAS_USER
+#
+# The un-privileged user that runs tomcat.
+# Default is tomcat
+#RUNAS_USER="tomcat"
+
+# WAITFOR
+#
+# How long (in seconds) to let tomcat try to exit normally. After that
+# period it'll be killed
+# Default is 30 seconds
+#WAITFOR=30
+
+# SECURITY
+#
+# Any value here will cause tomcat to run with a security manager.
+# comment to disable / uncomment to enable
+#SECURITY="on"
+
+# JAVA_OPTS
+#
+# This variable is used by tomcat as additional parameters to java.
+# It could be defined either here or in "$CATALINA_HOME/bin/setenv.sh"
+#export JAVA_OPTS=

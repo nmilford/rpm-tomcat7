@@ -1,0 +1,153 @@
+#!/bin/bash
+# Tomcat7 init script.
+#
+# chkconfig:  - 80 20
+# description:  Start/stop script for Tomcat6
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+[ -f /etc/sysconfig/network ] && . /etc/sysconfig/network
+[ "${NETWORKING}" = "no" ] && exit 0
+
+prog="tomcat6"
+[ -f /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+
+TOMCATDEBUG=
+TOMCATSECURITY=${SECURITY:+"-security"}
+CATALINA_HOME=${CATALINA_HOME:="/opt/tomcat6"}
+RUNAS_USER=${RUNAS_USER:="tomcat"}
+WAITFOR=${WAITFOR:=3}
+CATALINA_PID="/var/run/${prog}.pid"
+RUN_SCRIPT="${CATALINA_HOME}/bin/catalina.sh"
+
+CDIR=$(pwd)
+
+JUNK=${JAVA_HOME:?"MUST BE CONFIGURED IN /etc/sysconfig/$prog"}
+if [ ! -d $JAVA_HOME ]; then
+  echo "$JAVA_HOME doesn't exist!"
+  exit 1
+fi
+
+if [ ! -d $CATALINA_HOME ]; then
+  echo CATALINA_HOME does not exist as a valid directory: $CATALINA_HOME
+  exit 1
+fi
+
+export CATALINA_HOME CATALINA_PID JAVA_HOME
+
+cleanup() {
+  rm -f ${CATALINA_PID}
+}
+
+echoFailure() {
+  echo_failure
+  echo
+}
+
+echoSuccess() {
+  echo_success
+  echo
+}
+
+start() {
+  echo -n "Starting $prog..."
+  STATUS=$(status >/dev/null)
+  R=$?
+  if [ $R -eq 0 ]; then
+    echo -n "$prog is already running. exiting."
+    echoFailure
+    return 1
+  fi
+
+  touch ${CATALINA_PID}
+  chown ${RUNAS_USER}:${RUNAS_USER} ${CATALINA_PID}
+  cd ${CATALINA_HOME}
+  runuser -s /bin/bash ${RUNAS_USER} -c "${RUN_SCRIPT} start >>${CATALINA_HOME}/logs/catalina.out 2>&1"
+  RETVAL=$?
+  cd ${CDIR}
+  if [ $RETVAL -eq 0 ]; then
+    echoSuccess
+  else
+    echoFailure
+  fi
+}
+
+status() {
+  RETVAL=1
+  if [ -s ${CATALINA_PID} ]; then
+    read kpid < ${CATALINA_PID}
+    if checkpid $kpid 2>&1; then
+      echo "$prog is running ($kpid)"
+      RETVAL=0
+    else
+      echo "The lock file was found but no process running for pid $kpid."
+    fi
+  else
+    CHECKPROC="Dcatalina.home=${CATALINA_HOME}.*org.apache.catalina.startup.Bootstrap"
+    pid="$(pgrep -u ${RUNAS_USER} -f ${CHECKPROC})"
+      if [ -n "$pid" ]; then
+        echo "$prog is running ($pid) but no PID file exists (or it's empty)."
+        RETVAL="0"
+      else
+        echo "$prog is stopped."
+      fi
+    fi
+    return $RETVAL
+}
+
+stop() {
+  echo -n "Stopping $prog."
+
+  if status >/dev/null; then
+    runuser -s /bin/bash ${RUNAS_USER} -c "${RUN_SCRIPT} stop >>${CATALINA_HOME}/logs/catalina.out 2>&1"
+
+    COUNT=0
+    while [ $COUNT -lt ${WAITFOR} ]; do
+      if status >/dev/null; then
+        echo -n "."
+        sleep 1
+      else
+        echoSuccess
+        cleanup
+        return
+      fi
+      COUNT=$(expr  $COUNT + 1)
+    done
+
+    echo
+    echo -n "$prog didn't stop, killing it softly.."
+    CHECKPROC="Dcatalina.home=${CATALINA_HOME}.*org.apache.catalina.startup.Bootstrap"
+    pid="$(pgrep -u ${RUNAS_USER} -f ${CHECKPROC})"
+    kill $pid
+    sleep 4
+    if status >/dev/null; then
+      echo
+      echo "Shutdown is taking too long, force stopping $prog."
+      kill -9 $pid
+      if status >/dev/null; then
+        echoFailure
+      else
+        echoSuccess
+        cleanup
+        return
+      fi
+    else
+      echoSuccess
+      cleanup
+      return
+    fi
+  else
+    echo
+    echo -n "$prog is not running. Exiting."
+    echoFailure
+  fi
+}
+
+case "$1" in
+  start)  start;;
+  stop)   stop;;
+  status) status;;
+  restart) stop ; start;;
+  *) echo "Usage: $0 [ start | stop | status | restart ]";;
+esac
