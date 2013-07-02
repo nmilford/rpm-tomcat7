@@ -5,7 +5,7 @@ An RPM spec file to install Tomcat 7.0.
 
 To Build:
 
-`sudo yum -y install rpmdevtools && rpmdev-setuptree
+`sudo yum -y install rpmdevtools && rpmdev-setuptree`
 
 `wget https://raw.github.com/nmilford/rpm-tomcat7/master/tomcat7.spec -O ~/rpmbuild/SPECS/tomcat7.spec`
 
