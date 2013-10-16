@@ -10,7 +10,7 @@
 # rpmbuild -bb ~/rpmbuild/SPECS/tomcat7.spec
 
 %define __jar_repack %{nil}
-%define tomcat_home /opt/tomcat6
+%define tomcat_home /opt/tomcat7
 %define tomcat_group tomcat
 %define tomcat_user tomcat
 
