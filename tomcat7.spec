@@ -6,17 +6,17 @@
 # wget https://raw.github.com/nmilford/rpm-tomcat7/master/tomcat7.init -O ~/rpmbuild/SOURCES/tomcat7.init
 # wget https://raw.github.com/nmilford/rpm-tomcat7/master/tomcat7.sysconfig -O ~/rpmbuild/SOURCES/tomcat7.sysconfig
 # wget https://raw.github.com/nmilford/rpm-tomcat7/master/tomcat7.logrotate -O ~/rpmbuild/SOURCES/tomcat7.logrotate
-# wget http://www.motorlogy.com/apache/tomcat/tomcat-7/v7.0.41/bin/apache-tomcat-7.0.41.tar.gz -O ~/rpmbuild/SOURCES/apache-tomcat-7.0.41.tar.gz
+# wget http://www.motorlogy.com/apache/tomcat/tomcat-7/v7.0.53/bin/apache-tomcat-7.0.53.tar.gz -O ~/rpmbuild/SOURCES/apache-tomcat-7.0.53.tar.gz
 # rpmbuild -bb ~/rpmbuild/SPECS/tomcat7.spec
 
 %define __jar_repack %{nil}
-%define tomcat_home /opt/tomcat7
+%define tomcat_home /usr/share/tomcat7
 %define tomcat_group tomcat
 %define tomcat_user tomcat
 
 Summary:    Apache Servlet/JSP Engine, RI for Servlet 2.4/JSP 2.0 API
 Name:       tomcat7
-Version:    7.0.41
+Version:    7.0.53
 BuildArch:  noarch
 Release:    1
 License:    Apache Software License
@@ -26,7 +26,7 @@ Source0:    apache-tomcat-%{version}.tar.gz
 Source1:    %{name}.init
 Source2:    %{name}.sysconfig
 Source3:    %{name}.logrotate
-Requires:   jdk
+Requires:   java, %{name}-lib = %{version}-%{release}
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description
@@ -44,6 +44,46 @@ learn more about getting involved, click here.
 This package contains the base tomcat installation that depends on Sun's JDK and not
 on JPP packages.
 
+%package lib
+Group: Development/Compilers
+Summary: Libraries needed to run the Tomcat Web container
+Requires: %{name} = %{version}-%{release}
+
+%description lib
+Libraries needed to run the Tomcat Web container
+
+%package admin-webapps
+Group: System Environment/Applications
+Summary: The host-manager and manager web applications for Apache Tomcat
+Requires: %{name} = %{version}-%{release}
+
+%description admin-webapps
+The host-manager and manager web applications for Apache Tomcat.
+
+%package docs-webapp
+Group: System Environment/Applications
+Summary: The docs web application for Apache Tomcat
+Requires: %{name} = %{version}-%{release}
+
+%description docs-webapp
+The docs web application for Apache Tomcat.
+
+%package examples-webapp
+Group: System Environment/Applications
+Summary: The examples web application for Apache Tomcat
+Requires: %{name} = %{version}-%{release}
+
+%description examples-webapp
+The examples web application for Apache Tomcat.
+
+%package root-webapp
+Group: System Environment/Applications
+Summary: The ROOT web application for Apache Tomcat
+Requires: %{name} = %{version}-%{release}
+
+%description root-webapp
+The ROOT web application for Apache Tomcat.
+
 %prep
 %setup -q -n apache-tomcat-%{version}
 
@@ -60,12 +100,51 @@ cd %{buildroot}/%{tomcat_home}/
 ln -s /var/log/%{name}/ logs
 cd -
 
+# Put temp in /var/cache and link back.
+rm -rf %{buildroot}/%{tomcat_home}/temp
+install -d -m 755 %{buildroot}/var/cache/%{name}/temp
+cd %{buildroot}/%{tomcat_home}/
+ln -s /var/cache/%{name}/temp temp
+cd -
+
+# Put work in /var/cache and link back.
+rm -rf %{buildroot}/%{tomcat_home}/work
+install -d -m 755 %{buildroot}/var/cache/%{name}/work
+cd %{buildroot}/%{tomcat_home}/
+ln -s /var/cache/%{name}/work work
+cd -
+
 # Put conf in /etc/ and link back.
-install -d -m 755 %{buildroot}/%{_sysconfdir}
-mv %{buildroot}/%{tomcat_home}/conf %{buildroot}/%{_sysconfdir}/%{name}
+install -d -m 755 %{buildroot}/%{_sysconfdir}/%{name}/Catalina/localhost
+mv %{buildroot}/%{tomcat_home}/conf/* %{buildroot}/%{_sysconfdir}/%{name}/
+rmdir %{buildroot}/%{tomcat_home}/conf
 cd %{buildroot}/%{tomcat_home}/
 ln -s %{_sysconfdir}/%{name} conf
 cd -
+
+# Put webapps in /var/lib and link back.
+install -d -m 755 %{buildroot}/var/lib/%{name}
+mv %{buildroot}/%{tomcat_home}/webapps %{buildroot}/var/lib/%{name}
+cd %{buildroot}/%{tomcat_home}/
+ln -s /var/lib/%{name}/webapps webapps
+cd -
+
+# Put lib in /usr/share/java and link back.
+install -d -m 755 %{buildroot}/usr/share/java
+mv %{buildroot}/%{tomcat_home}/lib %{buildroot}/usr/share/java/%{name}
+cd %{buildroot}/%{tomcat_home}/
+ln -s /usr/share/java/%{name} lib
+cd -
+
+# Put docs in /usr/share/doc
+install -d -m 755 %{buildroot}/usr/share/doc/%{name}-%{version}
+mv %{buildroot}/%{tomcat_home}/{RUNNING.txt,LICENSE,NOTICE,RELEASE*} %{buildroot}/usr/share/doc/%{name}-%{version}
+
+# Put executables in /usr/bin
+rm  %{buildroot}/%{tomcat_home}/bin/*bat
+install -d -m 755 %{buildroot}/usr/{bin,sbin}
+mv %{buildroot}/%{tomcat_home}/bin/digest.sh %{buildroot}/usr/bin/%{name}-digest
+mv %{buildroot}/%{tomcat_home}/bin/tool-wrapper.sh %{buildroot}/usr/bin/%{name}-tool-wrapper
 
 # Drop init script
 install -d -m 755 %{buildroot}/%{_initrddir}
@@ -88,13 +167,39 @@ getent passwd %{tomcat_user} >/dev/null || /usr/sbin/useradd --comment "Tomcat D
 
 %files
 %defattr(-,%{tomcat_user},%{tomcat_group})
-%{tomcat_home}/*
 /var/log/%{name}/
+/var/cache/%{name}
+%dir /var/lib/%{name}/webapps
 %defattr(-,root,root)
+%{tomcat_home}/*
+%attr(0755,root,root) /usr/bin/*
+%dir /var/lib/%{name}
 %{_initrddir}/%{name}
 %{_sysconfdir}/logrotate.d/%{name}
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
-%config(noreplace) %{_sysconfdir}/%{name}/*
+%config(noreplace) %{_sysconfdir}/%{name}
+%doc /usr/share/doc/%{name}-%{version}
+
+%files lib
+%defattr(0644,root,root,0755)
+/usr/share/java/%{name}
+
+%files admin-webapps
+%defattr(0644,root,root,0755)
+/var/lib/%{name}/webapps/host-manager
+/var/lib/%{name}/webapps/manager
+
+%files docs-webapp
+%defattr(0644,root,root,0755)
+/var/lib/%{name}/webapps/docs
+
+%files examples-webapp
+%defattr(0644,root,root,0755)
+/var/lib/%{name}/webapps/examples
+
+%files root-webapp
+%defattr(0644,root,root,0755)
+/var/lib/%{name}/webapps/ROOT
 
 %post
 chkconfig --add %{name}
@@ -111,5 +216,8 @@ if [ $1 -ge 1 ]; then
 fi
 
 %changelog
+* Fri Apr 4 2014 Elliot Kendall <elliot.kendall@ucsf.edu>
+- Update to 7.0.53
+- Changes to more closely match stock EL tomcat package
 * Mon Jul 1 2013 Nathan Milford <nathan@milford.io>
 - 7.0.41

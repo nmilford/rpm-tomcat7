@@ -15,7 +15,7 @@ prog="tomcat7"
 
 TOMCATDEBUG=
 TOMCATSECURITY=${SECURITY:+"-security"}
-CATALINA_HOME=${CATALINA_HOME:="/opt/tomcat6"}
+CATALINA_HOME=${CATALINA_HOME:="/usr/share/$prog"}
 RUNAS_USER=${RUNAS_USER:="tomcat"}
 WAITFOR=${WAITFOR:=3}
 CATALINA_PID="/var/run/${prog}.pid"
@@ -34,7 +34,7 @@ if [ ! -d $CATALINA_HOME ]; then
   exit 1
 fi
 
-export CATALINA_HOME CATALINA_PID JAVA_HOME
+export CATALINA_HOME CATALINA_PID JAVA_HOME JAVA_OPTS
 
 cleanup() {
   rm -f ${CATALINA_PID}
