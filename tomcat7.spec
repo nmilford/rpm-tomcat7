@@ -6,7 +6,7 @@
 # wget https://raw.github.com/nmilford/rpm-tomcat7/master/tomcat7.init -O ~/rpmbuild/SOURCES/tomcat7.init
 # wget https://raw.github.com/nmilford/rpm-tomcat7/master/tomcat7.sysconfig -O ~/rpmbuild/SOURCES/tomcat7.sysconfig
 # wget https://raw.github.com/nmilford/rpm-tomcat7/master/tomcat7.logrotate -O ~/rpmbuild/SOURCES/tomcat7.logrotate
-# wget http://www.motorlogy.com/apache/tomcat/tomcat-7/v7.0.55/bin/apache-tomcat-7.0.55.tar.gz -O ~/rpmbuild/SOURCES/apache-tomcat-7.0.55.tar.gz
+# wget http://www.motorlogy.com/apache/tomcat/tomcat-7/v7.0.61/bin/apache-tomcat-7.0.61.tar.gz -O ~/rpmbuild/SOURCES/apache-tomcat-7.0.61.tar.gz
 # rpmbuild -bb ~/rpmbuild/SPECS/tomcat7.spec
 
 %define __jar_repack %{nil}
@@ -16,7 +16,7 @@
 
 Summary:    Apache Servlet/JSP Engine, RI for Servlet 2.4/JSP 2.0 API
 Name:       tomcat7
-Version:    7.0.55
+Version:    7.0.61
 BuildArch:  noarch
 Release:    1
 License:    Apache Software License
@@ -111,6 +111,8 @@ if [ $1 -ge 1 ]; then
 fi
 
 %changelog
+* Mon May 11 2015 Forest Handford <foresthandford+VS@gmail.com>
+- 7.0.61
 * Thu Sep 4 2014 Edward Bartholomew <edward@bartholomew>
 - 7.0.55
 * Mon Jul 1 2013 Nathan Milford <nathan@milford.io>
