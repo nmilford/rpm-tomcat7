@@ -15,6 +15,6 @@ To Build:
 
 `wget https://raw.github.com/nmilford/rpm-tomcat7/master/tomcat7.logrotate -O ~/rpmbuild/SOURCES/tomcat7.logrotate --no-check-certificate`
 
-`wget http://www.motorlogy.com/apache/tomcat/tomcat-7/v7.0.61/bin/apache-tomcat-7.0.61.tar.gz -O ~/rpmbuild/SOURCES/apache-tomcat-7.0.61.tar.gz`
+`wget http://www.motorlogy.com/apache/tomcat/tomcat-7/v7.0.62/bin/apache-tomcat-7.0.62.tar.gz -O ~/rpmbuild/SOURCES/apache-tomcat-7.0.62.tar.gz`
 
 `rpmbuild -bb ~/rpmbuild/SPECS/tomcat7.spec`
